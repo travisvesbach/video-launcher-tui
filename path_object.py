@@ -4,7 +4,7 @@ import xml.etree.ElementTree as ET
 import os
 
 class PathObject:
-    def __init__(self, label, path, parent = False, set_options = False):
+    def __init__(self, label, path, parent = False, directory_type = False, set_options = False):
         self.label = label
         self.path = path
         self.parent = parent
@@ -13,7 +13,7 @@ class PathObject:
         self.original_title = False
         self.watched = False
         self.last_watched = False
-        self.type = False
+        self.type = directory_type
         self.plot = False
         self.year = False
         self.tagline = False
@@ -22,7 +22,9 @@ class PathObject:
         self.genre = []
         self.country = False
         self.airing = False
-        self.options = self.set_options() if set_options else False
+        self.options = False
+        if set_options and os.path.isdir(self.path):
+            self.set_options()
 
         self.find_nfo()
 
@@ -76,29 +78,19 @@ class PathObject:
 
     def play_path(self):
         if self.type == 'movie':
-            return self.get_dir_list()[0].path
+            return self.options[0].path
 
 
     def find_nfo(self):
-        path = Path(self.path + '/tvshow.nfo')
-        if path.is_file():
-            self.type = 'tvshow'
+        path = False
+        if self.type == 'tvshow':
+            path = Path(self.path + '/tvshow.nfo')
+        elif self.type == 'movie':
+            path = Path(self.path + '/movie.nfo')
+        elif self.type == 'episode':
+            path = Path(os.path.splitext(self.path)[0] + '.nfo')
+        if path and path.is_file():
             self.read_nfo(path)
-            return
-        path = Path(self.path + '/movie.nfo')
-        if path.is_file():
-            self.type = 'movie'
-            self.read_nfo(path)
-            return
-        path = Path(os.path.splitext(self.path)[0] + '.nfo')
-        if path.is_file():
-            self.type = 'episode'
-            self.read_nfo(path)
-        if self.parent and self.parent.type == 'tvshow':
-            self.type = 'season'
-        if self.parent and self.parent.type == 'season':
-            self.type = 'episode'
-
 
     def read_nfo(self, path):
         self.nfo_path = path
@@ -134,7 +126,16 @@ class PathObject:
         dir_contents = []
         for entry in Path(self.path).iterdir():
             if not str(entry).endswith('.jpg') and not str(entry).endswith('.png') and not str(entry).endswith('.srt') and not str(entry).endswith('.nfo'):
-                dir_contents.append(PathObject(entry.name, str(entry), self, recursive))
+                directory_type = False
+                if '_dir' in self.type:
+                    directory_type = self.type.split('_')[0]
+                elif self.type == 'movie':
+                    directory_type = 'movie'
+                elif self.type == 'tvshow':
+                    directory_type = 'season'
+                elif self.type == 'season':
+                    directory_type = 'episode'
+                dir_contents.append(PathObject(entry.name, str(entry), self, directory_type, recursive))
         self.options = dir_contents
 
     def play(self):

@@ -19,6 +19,11 @@ class IndexScreen():
         widget_set.add_key_command(py_cui.keys.KEY_BACKSPACE, self.back)
         widget_set.add_key_command(py_cui.keys.KEY_CTRL_W, self.show_search)
 
+        self.widgets['back_btn'] = widget_set.add_button('Back', 0, 0, command=self.back)
+        self.widgets['search_btn'] = widget_set.add_button('Search', 1, 0, command=self.show_search)
+        self.widgets['exit_btn'] = widget_set.add_button('Exit', 7, 0, command=exit)
+        self.widgets['exit_btn'].set_color(py_cui.RED_ON_BLACK)
+
         self.widgets['index'] = widget_set.add_scroll_menu('Directories', 0, 1, row_span=8, column_span=3)
         self.widgets['index'].add_key_command(py_cui.keys.KEY_ENTER, self.open)
         self.widgets['index'].add_mouse_command(py_cui.keys.LEFT_MOUSE_CLICK, self.open)
@@ -31,34 +36,22 @@ class IndexScreen():
         self.widgets['plot'].add_key_command(py_cui.keys.KEY_BACKSPACE, self.back)
         self.widgets['plot'].set_selectable(False)
 
-        self.widgets['back_btn'] = widget_set.add_button('Back', 0, 0, command=self.back)
-        self.widgets['search_btn'] = widget_set.add_button('Search', 1, 0, command=self.show_search)
-        self.widgets['exit_btn'] = widget_set.add_button('Exit', 7, 0, command=exit)
-        self.widgets['exit_btn'].set_color(py_cui.RED_ON_BLACK)
-
-
         return widget_set
-
 
     def focus(self):
         self.parent.master.move_focus(self.widgets['index'])
-
-    def back(self):
-        self.parent.go_to()
 
     def show_search(self):
         self.parent.master.show_text_box_popup('Search', self.search)
 
     def search(self, text):
         self.search_text = text
-        self.open(self.path)
+        self.load(self.path)
 
-    def open(self, path):
+    def load(self, path):
         self.path = path
-
-        if not path.options:
-            path.set_options(True)
-
+        if not self.path.options:
+            self.path.set_options(True)
         self.widgets['index'].set_title(path.label)
         self.widgets['index'].clear()
         self.widgets['plot'].clear()
@@ -78,3 +71,11 @@ class IndexScreen():
         if selected.plot:
             width = self.widgets['plot'].get_absolute_stop_pos()[0] - self.widgets['plot'].get_absolute_start_pos()[0] - 6
             self.widgets['plot'].set_text(selected.display_plot(width))
+
+    def back(self):
+        self.search_text = False
+        self.parent.go_to()
+
+    def open(self):
+        selected = self.widgets['index'].get()
+        self.parent.go_to(selected)

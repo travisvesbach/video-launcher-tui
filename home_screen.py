@@ -2,15 +2,12 @@ from path_object import PathObject
 import os
 import py_cui
 
-from pprint import pprint
-
 class HomeScreen():
 
     parent = False
     widgets = {}
     options = {}
 
-    tvshows_dir = False
     anime_dir = False
     movies_dir = False
     tvshows_dir = False
@@ -18,9 +15,9 @@ class HomeScreen():
     def __init__(self, parent):
         self.parent = parent
 
-        self.anime_dir = PathObject('Anime', os.getenv('ANIME_DIR'))
-        self.movies_dir = PathObject('Movies', os.getenv('MOVIES_DIR'))
-        self.tvshows_dir = PathObject('TV Shows', os.getenv('TVSHOWS_DIR'))
+        self.anime_dir = PathObject('Anime', os.getenv('ANIME_DIR'), False, 'tvshow_dir')
+        self.movies_dir = PathObject('Movies', os.getenv('MOVIES_DIR'), False, 'movie_dir')
+        self.tvshows_dir = PathObject('TV Shows', os.getenv('TVSHOWS_DIR'), False, 'tvshow_dir')
 
 
     def initialize_screen_elements(self):
