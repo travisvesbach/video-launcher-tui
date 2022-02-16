@@ -20,7 +20,6 @@ class VideoLauncher:
     home_screen_set = False
     index_screen_set = False
     movie_screen_set = False
-    current_widget_set = False
 
     # We add type annotations to our master PyCUI objects for improved intellisense
     def __init__(self, master: py_cui.PyCUI):
@@ -40,14 +39,12 @@ class VideoLauncher:
 
         self.master.toggle_unicode_borders()
         self.master.set_widget_cycle_key(py_cui.keys.KEY_TAB)
-        self.master.set_status_bar_text('Focus - Enter | Back - Bcksp | Search - ctrl+w | Navigate - Arrows')
 
 
 
 
     def set_widget_set(self, widget_set):
         self.master.apply_widget_set(widget_set)
-        self.current_widget_set = widget_set
         if widget_set == self.home_screen_set:
             self.home_screen.focus()
         elif widget_set == self.index_screen_set:
@@ -69,8 +66,8 @@ class VideoLauncher:
 
 
     def open_tvshow(self):
-        if self.current_widget_set != self.widget_sets['tvshow']:
-            self.set_widget_set(self.widget_sets['tvshow'])
+        # if self.current_widget_set != self.widget_sets['tvshow']:
+            # self.set_widget_set(self.widget_sets['tvshow'])
         self.elements['tvshow_plot_box'].clear()
         if self.current.plot:
             width = self.elements['tvshow_plot_box'].get_absolute_stop_pos()[0] - self.elements['tvshow_plot_box'].get_absolute_start_pos()[0] - 6

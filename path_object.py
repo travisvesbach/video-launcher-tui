@@ -29,9 +29,9 @@ class PathObject:
         self.find_nfo()
 
     def __str__(self):
-        return self.display_name()
+        return self.display_name_prefex() + self.display_name()
 
-    def display_name(self):
+    def display_name_prefex(self):
         output = ''
         if self.type:
             if self.watched == 'true':
@@ -40,21 +40,16 @@ class PathObject:
                 output = output + ' \u25B6 '
             else:
                 output = output + '   '
-
             if self.last_watched:
-                output = output + ' ' + self.last_watched + ' '
+                output = output + ' ' + datetime.strftime(self.last_watched, '%m/%d/%Y') + ' '
             else:
                 output = output + '            '
-
             output = output + ' | '
-            if self.title:
-                output = output + self.title
-            else:
-                output = output + self.label
-        else:
-            output = self.label
-
         return output
+
+
+    def display_name(self):
+        return self.title if self.title else self.label
 
     def display_plot(self, width = False):
         if width:
@@ -73,7 +68,7 @@ class PathObject:
         output += ('Country: ' + self.country + '\n' if self.country else '')
         output += ('Genre: ' + ', '.join(self.genre) + '\n' if len(self.genre) > 0 else '')
         output += ('Runtime: ' + self.runtime + ' minutes\n' if self.runtime else '')
-        output += ('Last Watched: ' + self.last_watched + '\n' if self.last_watched else '')
+        output += ('Last Watched: ' + datetime.strftime(self.last_watched, '%m/%d/%Y') + '\n' if self.last_watched else '')
         return output
 
     def play_path(self):
@@ -102,7 +97,7 @@ class PathObject:
             elif child.tag == 'iswatched':
                 self.watched = child.text
             elif child.tag == 'lastwatched':
-                self.last_watched = datetime.strftime(datetime.strptime(child.text, '%m/%d/%Y'), '%m/%d/%Y')
+                self.last_watched = datetime.strptime(child.text, '%m/%d/%Y')
             elif child.tag == 'plot':
                 self.plot = child.text
             elif child.tag == 'originaltitle' and child.text != self.title:
@@ -136,16 +131,16 @@ class PathObject:
                 elif self.type == 'season':
                     directory_type = 'episode'
                 dir_contents.append(PathObject(entry.name, str(entry), self, directory_type, recursive))
-        self.options = dir_contents
+        self.options = sorted(dir_contents, key=lambda k: k.title)
 
     def play(self):
         # set watched and last_watched
         self.watched = 'true'
-        self.last_watched = datetime.now().strftime("%m/%d/%Y")
+        self.last_watched = datetime.now()
         tree = ET.parse(self.nfo_path)
         root = tree.getroot()
         if len(tree.findall('lastwatched')) > 0:
-            tree.find('lastwatched').text = self.last_watched
+            tree.find('lastwatched').text = datetime.strftime(self.last_watched, '%m/%d/%Y')
         else:
             child = ET.Element('lastwatched')
             child.text = self.last_watched

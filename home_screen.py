@@ -6,7 +6,7 @@ class HomeScreen():
 
     parent = False
     widgets = {}
-    options = {}
+    # options = {}
 
     anime_dir = False
     movies_dir = False
