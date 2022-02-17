@@ -23,6 +23,8 @@ class PathObject:
         self.country = False
         self.airing = False
         self.options = False
+        self.season_count = False
+        self.episode_count = False
         if set_options and os.path.isdir(self.path):
             self.set_options()
 
@@ -68,13 +70,14 @@ class PathObject:
         output += ('Country: ' + self.country + '\n' if self.country else '')
         output += ('Genre: ' + ', '.join(self.genre) + '\n' if len(self.genre) > 0 else '')
         output += ('Runtime: ' + self.runtime + ' minutes\n' if self.runtime else '')
+        output += ('Seasons: ' + str(self.season_count) + '\n' if self.season_count else '')
+        output += ('Episodes: ' + str(self.episode_count) + '\n' if self.episode_count else '')
         output += ('Last Watched: ' + datetime.strftime(self.last_watched, '%m/%d/%Y') + '\n' if self.last_watched else '')
         return output
 
     def play_path(self):
         if self.type == 'movie':
             return self.options[0].path
-
 
     def find_nfo(self):
         path = False
@@ -120,7 +123,7 @@ class PathObject:
     def set_options(self, recursive = False):
         dir_contents = []
         for entry in Path(self.path).iterdir():
-            if not str(entry).endswith('.jpg') and not str(entry).endswith('.png') and not str(entry).endswith('.srt') and not str(entry).endswith('.nfo'):
+            if not str(entry).endswith(('.jpg','.png', '.srt','.nfo')):
                 directory_type = False
                 if '_dir' in self.type:
                     directory_type = self.type.split('_')[0]
@@ -131,7 +134,18 @@ class PathObject:
                 elif self.type == 'season':
                     directory_type = 'episode'
                 dir_contents.append(PathObject(entry.name, str(entry), self, directory_type, recursive))
+
         self.options = sorted(dir_contents, key=lambda k: k.title)
+
+        if self.type == 'tvshow':
+            season_count = 0
+            episode_count = 0
+            for season in dir_contents:
+                season_count = season_count + (1 if 'Season' in season.label else 0)
+                episode_count = episode_count + (len(season.options) if season.options else 0)
+            self.season_count = season_count if season_count > 0 else False
+            self.episode_count = episode_count if episode_count > 0 else False
+
 
     def play(self):
         # set watched and last_watched
@@ -162,17 +176,17 @@ class PathObject:
             self.last_watched = False
         else:
             self.watched = 'true'
-            self.last_watched = datetime.now().strftime("%m/%d/%Y")
+            self.last_watched = datetime.now()
 
         tree = ET.parse(self.nfo_path)
         root = tree.getroot()
         if len(tree.findall('lastwatched')) > 0 and self.last_watched == False:
             root.remove(tree.findall('lastwatched')[0])
         elif len(tree.findall('lastwatched')) > 0 and self.last_watched:
-            tree.findall('lastwatched')[0].text = self.last_watched
+            tree.findall('lastwatched')[0].text = self.last_watched.strftime("%m/%d/%Y")
         elif len(tree.findall('lastwatched')) == 0 and self.last_watched:
             child = ET.Element('lastwatched')
-            child.text = self.last_watched
+            child.text = self.last_watched.strftime("%m/%d/%Y")
             root.append(child)
         if len(tree.findall('iswatched')) > 0:
             tree.findall('iswatched')[0].text = self.watched

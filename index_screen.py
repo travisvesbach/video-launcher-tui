@@ -1,6 +1,7 @@
 from path_object import PathObject
 import os
 import py_cui
+import threading
 
 class IndexScreen():
 
@@ -72,32 +73,40 @@ class IndexScreen():
         self.load(self.path)
 
     def load(self, path = False):
-        refresh = True if not self.path else False
+        reset_genres = True if not self.path else False
         self.path = path if path else self.path
         if not self.path.options:
-            self.path.set_options(True)
-        self.reset_genre_filter(refresh)
-        self.widgets['index'].set_title(self.path.label)
-        self.widgets['index'].clear()
-        self.widgets['plot'].clear()
-        self.widgets['index'].add_item_list(self.filter_options())
-        self.focus()
-        self.show_summary()
+            self.parent.master.show_loading_icon_popup('Please Wait', 'Loading ' + self.path.label)
+            threading.Thread(target=self.load_options).start()
+        self.reset(reset_genres)
 
-    def reset_genre_filter(self, refresh = True):
-        filtered_genre = [key for key,value in self.widgets['genre_filter']._selected_item_dict.items() if value == True]
+    def load_options(self):
+        self.path.set_options(True)
+        self.parent.master.stop_loading_popup()
+        self.reset(True)
+
+    def reset(self, reset_genres = False):
+        filtered_genres = [key for key,value in self.widgets['genre_filter']._selected_item_dict.items() if value == True]
         self.widgets['genre_filter'].clear()
         if self.path.options:
             self.widgets['genre_filter'].add_item_list(self.genre_filters())
-        if not refresh:
-            for genre in filtered_genre:
+        if not reset_genres:
+            for genre in filtered_genres:
                 self.widgets['genre_filter'].toggle_item_checked(genre)
+        self.widgets['index'].set_title(self.path.label)
+        self.widgets['index'].clear()
+        self.widgets['plot'].clear()
+        self.widgets['details'].clear()
+        if self.path.options:
+            self.widgets['index'].add_item_list(self.filter_options())
+        self.focus()
+        self.show_summary()
 
     def filter_options(self):
-        filtered_genre = [key for key,value in self.widgets['genre_filter']._selected_item_dict.items() if value == True]
+        filtered_genres = [key for key,value in self.widgets['genre_filter']._selected_item_dict.items() if value == True]
         options = self.path.options if self.path else []
-        if len(filtered_genre) > 0:
-            options = [option for option in options if set(filtered_genre).issubset(set(option.genre))]
+        if len(filtered_genres) > 0:
+            options = [option for option in options if set(filtered_genres).issubset(set(option.genre))]
         if self.search_text:
             options = [option for option in options if self.search_text.lower() in option.display_name().lower()]
         if self.sort_by == 'Last Watched':
