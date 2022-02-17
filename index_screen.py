@@ -20,6 +20,7 @@ class IndexScreen():
 
         widget_set.add_key_command(py_cui.keys.KEY_BACKSPACE, self.back)
         widget_set.add_key_command(py_cui.keys.KEY_CTRL_W, self.show_search)
+        widget_set.add_key_command(py_cui.keys.KEY_CTRL_S, self.show_sort)
         widget_set.add_key_command(py_cui.keys.KEY_CTRL_G, self.focus_genre_filter)
 
         self.widgets['back_btn'] = widget_set.add_button('Back', 0, 0, command=self.back)
@@ -36,7 +37,7 @@ class IndexScreen():
 
         self.widgets['index'] = widget_set.add_scroll_menu('Directories', 0, 1, row_span=8, column_span=3)
         self.widgets['index'].add_key_command(py_cui.keys.KEY_ENTER, self.open)
-        self.widgets['index'].add_mouse_command(py_cui.keys.LEFT_MOUSE_CLICK, self.open)
+        # self.widgets['index'].add_mouse_command(py_cui.keys.LEFT_MOUSE_CLICK, self.open)
         self.widgets['index'].add_key_command(py_cui.keys.KEY_BACKSPACE, self.back)
         self.widgets['index'].set_selected_color(py_cui.GREEN_ON_BLACK)
         self.widgets['index'].add_key_command(py_cui.keys.KEY_CTRL_W, self.show_search)
@@ -44,9 +45,13 @@ class IndexScreen():
         self.widgets['index'].add_key_command(py_cui.keys.KEY_CTRL_S, self.show_sort)
         self.widgets['index'].set_on_selection_change_event(self.show_summary)
 
-        self.widgets['plot'] = widget_set.add_text_block('Plot', 0, 4, row_span=8, column_span=2)
+        self.widgets['plot'] = widget_set.add_text_block('Plot', 0, 4, row_span=5, column_span=2)
         self.widgets['plot'].add_key_command(py_cui.keys.KEY_BACKSPACE, self.back)
         self.widgets['plot'].set_selectable(False)
+
+        self.widgets['details'] = widget_set.add_text_block('Details', 5, 4, row_span=3, column_span=2)
+        self.widgets['details'].add_key_command(py_cui.keys.KEY_BACKSPACE, self.back)
+        self.widgets['details'].set_selectable(False)
 
         return widget_set
 
@@ -98,7 +103,7 @@ class IndexScreen():
         if self.sort_by == 'Last Watched':
             options = sorted(options, key=lambda k: (k.last_watched is not False, k.last_watched), reverse=True)
         if self.sort_by == 'Year':
-            options = sorted(options, key=lambda k: (k.year is False, k.year))
+            options = sorted(options, key=lambda k: (k.year is None, k.year))
         return options
 
     def show_summary(self):
@@ -107,6 +112,7 @@ class IndexScreen():
         if selected and selected.plot:
             width = self.widgets['plot'].get_absolute_stop_pos()[0] - self.widgets['plot'].get_absolute_start_pos()[0] - 6
             self.widgets['plot'].set_text(selected.display_plot(width))
+            self.widgets['details'].set_text(selected.display_details())
 
     def back(self):
         self.search_text = False

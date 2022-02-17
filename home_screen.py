@@ -22,7 +22,7 @@ class HomeScreen():
 
     def initialize_screen_elements(self):
         widget_set = self.parent.master.create_new_widget_set(8,6)
-        self.widgets['index'] = widget_set.add_scroll_menu('Directories', 0, 1, row_span=8, column_span=3)
+        self.widgets['index'] = widget_set.add_scroll_menu('Directories', 0, 1, row_span=8, column_span=2)
         self.widgets['index'].add_item_list([self.anime_dir, self.movies_dir, self.tvshows_dir])
         self.widgets['index'].set_selected_color(py_cui.GREEN_ON_BLACK)
         self.widgets['index'].add_key_command(py_cui.keys.KEY_ENTER, self.open_directory)

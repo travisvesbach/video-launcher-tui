@@ -33,17 +33,17 @@ class PathObject:
 
     def display_name_prefex(self):
         output = ''
-        if self.type:
+        if self.type and '_dir' not in self.type:
             if self.watched == 'true':
                 output = output + ' \u2713 '
             elif self.watched == 'in-progress':
                 output = output + ' \u25B6 '
             else:
                 output = output + '   '
-            if self.last_watched:
-                output = output + ' ' + datetime.strftime(self.last_watched, '%m/%d/%Y') + ' '
-            else:
-                output = output + '            '
+            # if self.last_watched:
+            #     output = output + ' ' + datetime.strftime(self.last_watched, '%m/%d/%Y') + ' '
+            # else:
+            #     output = output + '            '
             output = output + ' | '
         return output
 
