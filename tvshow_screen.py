@@ -20,7 +20,7 @@ class TvshowScreen():
         widget_set.add_key_command(py_cui.keys.KEY_BACKSPACE, self.back)
 
         self.widgets['back_btn'] = widget_set.add_button('Back', 0, 0, command=self.back)
-        # self.widgets['play_btn'] = widget_set.add_button('Play', 1, 0, command=self.click_play)
+        self.widgets['episodes_btn'] = widget_set.add_button('Episodes', 1, 0, command=self.click_episode_list)
         self.widgets['watched_btn'] = widget_set.add_button('Toggle Watched', 2, 0, command=self.click_watched)
         self.widgets['exit_btn'] = widget_set.add_button('Exit', 7, 0, command=exit)
         self.widgets['exit_btn'].set_color(py_cui.RED_ON_BLACK)
@@ -54,13 +54,16 @@ class TvshowScreen():
     def back(self):
         self.parent.go_to(self.path.parent if self.path else False)
 
-    def click_play(self):
-        self.path.play()
-        self.update_details()
+    def click_episode_list(self):
+        self.parent.go_to(self.path, True)
 
     def click_watched(self):
-        self.path.toggle_watched()
-        self.update_details()
+        self.parent.master.show_yes_no_popup('This will update all episodes.  Continue?', self.toggle_watched)
+
+    def toggle_watched(self, proceed = False):
+        if proceed:
+            self.path.toggle_watched()
+            self.update_details()
 
     def update_details(self):
         self.widgets['details'].clear()

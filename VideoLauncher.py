@@ -6,6 +6,7 @@ from home_screen import HomeScreen
 from index_screen import IndexScreen
 from movie_screen import MovieScreen
 from tvshow_screen import TvshowScreen
+from episode_list_screen import EpisodeListScreen
 import time
 
 # from pprint import pprint
@@ -19,11 +20,13 @@ class VideoLauncher:
     index_screen = False
     movie_screen = False
     tvshow_screen = False
+    episode_list_screen = False
 
     home_screen_set = False
     index_screen_set = False
     movie_screen_set = False
     tvshow_screen_set = False
+    episode_list_screen_set = False
 
     # We add type annotations to our master PyCUI objects for improved intellisense
     def __init__(self, master: py_cui.PyCUI):
@@ -35,37 +38,34 @@ class VideoLauncher:
         self.index_screen = IndexScreen(self)
         self.movie_screen = MovieScreen(self)
         self.tvshow_screen = TvshowScreen(self)
+        self.episode_list_screen = EpisodeListScreen(self)
 
         self.home_screen_set = self.home_screen.initialize_screen_elements()
         self.index_screen_set = self.index_screen.initialize_screen_elements()
         self.movie_screen_set = self.movie_screen.initialize_screen_elements()
         self.tvshow_screen_set = self.tvshow_screen.initialize_screen_elements()
+        self.episode_list_screen_set = self.episode_list_screen.initialize_screen_elements()
 
-        self.set_widget_set(self.home_screen_set)
+        self.master.apply_widget_set(self.home_screen_set)
+        self.home_screen.focus()
 
         self.master.toggle_unicode_borders()
         self.master.set_widget_cycle_key(py_cui.keys.KEY_TAB)
 
 
-
-
-    def set_widget_set(self, widget_set):
-        self.master.apply_widget_set(widget_set)
-        if widget_set == self.home_screen_set:
-            self.home_screen.focus()
-        elif widget_set == self.index_screen_set:
-            self.index_screen.focus()
-
-
-    def go_to(self, path = False):
+    def go_to(self, path = False, episodes = False):
         if not path:
-            self.set_widget_set(self.home_screen_set)
+            self.master.apply_widget_set(self.home_screen_set)
+            self.home_screen.focus()
         elif not path.parent:
-            self.set_widget_set(self.index_screen_set)
+            self.master.apply_widget_set(self.index_screen_set)
             self.index_screen.load(path)
         elif path.type == 'movie':
-            self.set_widget_set(self.movie_screen_set)
+            self.master.apply_widget_set(self.movie_screen_set)
             self.movie_screen.load(path)
-        elif path.type == 'tvshow':
-            self.set_widget_set(self.tvshow_screen_set)
+        elif path.type == 'tvshow' and not episodes:
+            self.master.apply_widget_set(self.tvshow_screen_set)
             self.tvshow_screen.load(path)
+        elif path.type == 'tvshow' and episodes:
+            self.master.apply_widget_set(self.episode_list_screen_set)
+            self.episode_list_screen.load(path)

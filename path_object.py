@@ -24,7 +24,10 @@ class PathObject:
         self.airing = False
         self.options = False
         self.season_count = False
+        self.special_count = False
         self.episode_count = False
+        self.season = False
+        self.episode = False
         if set_options and os.path.isdir(self.path):
             self.set_options()
 
@@ -35,18 +38,16 @@ class PathObject:
 
     def display_name_prefex(self):
         output = ''
-        if self.type and '_dir' not in self.type:
+        if self.type and '_dir' not in self.type and self.type != 'season':
             if self.watched == 'true':
-                output = output + ' \u2713 '
+                output = output + '\u2713'
             elif self.watched == 'in-progress':
-                output = output + ' \u25B6 '
+                output = output + '\u25B6'
             else:
-                output = output + '   '
-            # if self.last_watched:
-            #     output = output + ' ' + datetime.strftime(self.last_watched, '%m/%d/%Y') + ' '
-            # else:
-            #     output = output + '            '
+                output = output + ' '
             output = output + ' | '
+        if self.type == 'episode':
+            output = output + str(self.episode).zfill(2) + '. '
         return output
 
 
@@ -78,6 +79,8 @@ class PathObject:
     def play_path(self):
         if self.type == 'movie':
             return self.options[0].path
+        if self.type == 'episode':
+            return self.path
 
     def find_nfo(self):
         path = False
@@ -119,6 +122,10 @@ class PathObject:
                 self.country = child.text
             elif child.tag == 'airing':
                 self.airing = child.text
+            elif child.tag == 'season':
+                self.season = child.text
+            elif child.tag == 'episode':
+                self.episode = child.text
 
     def set_options(self, recursive = False):
         dir_contents = []
@@ -135,63 +142,80 @@ class PathObject:
                     directory_type = 'episode'
                 dir_contents.append(PathObject(entry.name, str(entry), self, directory_type, recursive))
 
-        self.options = sorted(dir_contents, key=lambda k: k.title)
+        if self.type == 'season':
+            self.options = sorted(dir_contents, key=lambda k: int(k.episode))
+        else:
+            self.options = sorted(dir_contents, key=lambda k: k.title)
 
         if self.type == 'tvshow':
             season_count = 0
             episode_count = 0
+            special_count = 0
             for season in dir_contents:
                 season_count = season_count + (1 if 'Season' in season.label else 0)
+                special_count = special_count + (1 if 'Special' in season.label else 0)
                 episode_count = episode_count + (len(season.options) if season.options else 0)
             self.season_count = season_count if season_count > 0 else False
+            self.special_count = special_count if special_count > 0 else False
             self.episode_count = episode_count if episode_count > 0 else False
 
 
     def play(self):
-        # set watched and last_watched
-        self.watched = 'true'
-        self.last_watched = datetime.now()
-        tree = ET.parse(self.nfo_path)
-        root = tree.getroot()
-        if len(tree.findall('lastwatched')) > 0:
-            tree.find('lastwatched').text = datetime.strftime(self.last_watched, '%m/%d/%Y')
-        else:
-            child = ET.Element('lastwatched')
-            child.text = self.last_watched
-            root.append(child)
-        if len(tree.findall('iswatched')) > 0:
-            tree.find('iswatched').text = self.watched
-        else:
-            child = ET.Element('iswatched')
-            child.text = self.watched
-            root.append(child)
-        tree.write(self.nfo_path)
-        # if episode, update show's last watched
-        # open video
+        self.toggle_watched('true', True)
         os.startfile(self.play_path())
 
-    def toggle_watched(self):
-        if self.watched == 'true':
+    def toggle_watched(self, status = None, update_parent = False):
+        if status != None:
+            self.watched = status
+            self.last_watched = False if self.watched == 'false' else datetime.now()
+        elif self.watched == 'true':
             self.watched = 'false'
             self.last_watched = False
         else:
             self.watched = 'true'
             self.last_watched = datetime.now()
 
-        tree = ET.parse(self.nfo_path)
-        root = tree.getroot()
-        if len(tree.findall('lastwatched')) > 0 and self.last_watched == False:
-            root.remove(tree.findall('lastwatched')[0])
-        elif len(tree.findall('lastwatched')) > 0 and self.last_watched:
-            tree.findall('lastwatched')[0].text = self.last_watched.strftime("%m/%d/%Y")
-        elif len(tree.findall('lastwatched')) == 0 and self.last_watched:
-            child = ET.Element('lastwatched')
-            child.text = self.last_watched.strftime("%m/%d/%Y")
-            root.append(child)
-        if len(tree.findall('iswatched')) > 0:
-            tree.findall('iswatched')[0].text = self.watched
+        self.update_nfo()
+
+        if self.type == 'tvshow' or self.type == 'season':
+            for option in self.options:
+                option.toggle_watched(self.watched)
+        if self.type == 'episode' and update_parent:
+            self.parent.parent.toggle_watched_from_child()
+
+    def toggle_watched_from_child(self):
+        watched_count = 0
+        for season in self.options:
+            for episode in season.options:
+                if episode.watched == 'true':
+                    watched_count = watched_count + 1
+        if watched_count == self.episode_count:
+            self.watched = 'true'
+            self.last_watched = datetime.now()
+        elif watched_count > 0 and watched_count < self.episode_count:
+            self.watched = 'in-progress'
+            self.last_watched = datetime.now()
         else:
-            child = ET.Element('iswatched')
-            child.text = self.watched
-            root.append(child)
-        tree.write(self.nfo_path)
+            self.watched = 'false'
+            self.last_watched = False
+        self.update_nfo()
+
+    def update_nfo(self):
+        if self.nfo_path:
+            tree = ET.parse(self.nfo_path)
+            root = tree.getroot()
+            if len(tree.findall('lastwatched')) > 0 and self.last_watched == False:
+                root.remove(tree.findall('lastwatched')[0])
+            elif len(tree.findall('lastwatched')) > 0 and self.last_watched:
+                tree.findall('lastwatched')[0].text = self.last_watched.strftime("%m/%d/%Y")
+            elif len(tree.findall('lastwatched')) == 0 and self.last_watched:
+                child = ET.Element('lastwatched')
+                child.text = self.last_watched.strftime("%m/%d/%Y")
+                root.append(child)
+            if len(tree.findall('iswatched')) > 0:
+                tree.findall('iswatched')[0].text = self.watched
+            else:
+                child = ET.Element('iswatched')
+                child.text = self.watched
+                root.append(child)
+            tree.write(self.nfo_path)
