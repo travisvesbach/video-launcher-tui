@@ -47,7 +47,7 @@ class PathObject:
                 output = output + ' '
             output = output + ' | '
         if self.type == 'episode':
-            output = output + str(self.episode).zfill(2) + '. '
+            output = output + str(self.episode).zfill(len(str(len(self.parent.options)))) + '. '
         return output
 
 

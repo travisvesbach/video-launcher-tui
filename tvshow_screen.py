@@ -16,8 +16,7 @@ class TvshowScreen():
 
     def initialize_screen_elements(self):
         widget_set = self.parent.master.create_new_widget_set(8,6)
-
-        widget_set.add_key_command(py_cui.keys.KEY_BACKSPACE, self.back)
+        self.add_key_commands(widget_set)
 
         self.widgets['back_btn'] = widget_set.add_button('Back', 0, 0, command=self.back)
         self.widgets['episodes_btn'] = widget_set.add_button('Episodes', 1, 0, command=self.click_episode_list)
@@ -26,14 +25,19 @@ class TvshowScreen():
         self.widgets['exit_btn'].set_color(py_cui.RED_ON_BLACK)
 
         self.widgets['plot'] = widget_set.add_text_block('Plot', 0, 1, row_span=8, column_span=3)
-        self.widgets['plot'].add_key_command(py_cui.keys.KEY_BACKSPACE, self.back)
         self.widgets['plot'].set_selectable(False)
+        self.add_key_commands(self.widgets['plot'])
 
         self.widgets['details'] = widget_set.add_text_block('Details', 0, 4, row_span=8, column_span=2)
-        self.widgets['details'].add_key_command(py_cui.keys.KEY_BACKSPACE, self.back)
         self.widgets['details'].set_selectable(False)
+        self.add_key_commands(self.widgets['details'])
 
         return widget_set
+
+    def add_key_commands(self, target):
+        target.add_key_command(py_cui.keys.KEY_BACKSPACE, self.back)
+        target.add_key_command(py_cui.keys.KEY_CTRL_X, exit)
+        target.add_key_command(py_cui.keys.KEY_CTRL_I, self.toggle_help)
 
     def load(self, path):
         self.path = path
@@ -60,12 +64,24 @@ class TvshowScreen():
     def click_watched(self):
         self.parent.master.show_yes_no_popup('This will update all episodes.  Continue?', self.toggle_watched)
 
+    def toggle_help(self):
+        if self.widgets['details'].get_title() == 'Help':
+            self.update_details()
+        else:
+            message = 'backspace - back\nctrl+h - help\nctrl+x - exit\n'
+            self.widgets['details'].set_title('Help')
+            self.widgets['details'].clear()
+            self.widgets['details'].set_color(py_cui.YELLOW_ON_BLACK)
+            self.widgets['details'].set_text(message)
+
     def toggle_watched(self, proceed = False):
         if proceed:
             self.path.toggle_watched()
             self.update_details()
 
     def update_details(self):
+        self.widgets['details'].set_title('Details')
+        self.widgets['details'].set_color(py_cui.WHITE_ON_BLACK)
         self.widgets['details'].clear()
         self.widgets['details'].set_text(self.path.display_details())
         self.widgets['watched_btn'].set_title('Mark ' + ('Unwatched' if self.path.watched == 'true' else 'Watched'))

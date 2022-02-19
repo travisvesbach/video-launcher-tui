@@ -17,19 +17,16 @@ class IndexScreen():
 
     def initialize_screen_elements(self):
         widget_set = self.parent.master.create_new_widget_set(8,6)
-        self.parent.master.set_status_bar_text('Focus - Enter | Back - Bcksp | Search - ctrl+w | Genre Focus - ctrl+g | Navigate - Arrows')
-
-        widget_set.add_key_command(py_cui.keys.KEY_BACKSPACE, self.back)
-        widget_set.add_key_command(py_cui.keys.KEY_CTRL_W, self.show_search)
-        widget_set.add_key_command(py_cui.keys.KEY_CTRL_S, self.show_sort)
-        widget_set.add_key_command(py_cui.keys.KEY_CTRL_G, self.focus_genre_filter)
+        self.parent.master.set_status_bar_text('Focus - Enter | Back - Bcksp | Info/Help - ctrl+i| Navigate - Arrows')
+        self.add_key_commands(widget_set)
 
         self.widgets['back_btn'] = widget_set.add_button('Back', 0, 0, command=self.back)
         self.widgets['search_btn'] = widget_set.add_button('Search', 1, 0, command=self.show_search)
 
         self.widgets['genre_filter'] = widget_set.add_checkbox_menu('Genre', 2, 0, row_span=4)
-        self.widgets['genre_filter'].add_item_list(self.genre_filters())
         self.widgets['genre_filter'].set_selected_color(py_cui.GREEN_ON_BLACK)
+        self.set_genre_filters()
+        self.add_key_commands(self.widgets['genre_filter'])
 
         self.widgets['filter_btn'] = widget_set.add_button('Filter', 6, 0, command=self.load)
 
@@ -37,24 +34,32 @@ class IndexScreen():
         self.widgets['exit_btn'].set_color(py_cui.RED_ON_BLACK)
 
         self.widgets['index'] = widget_set.add_scroll_menu('Directories', 0, 1, row_span=8, column_span=3)
-        self.widgets['index'].add_key_command(py_cui.keys.KEY_ENTER, self.open)
-        # self.widgets['index'].add_mouse_command(py_cui.keys.LEFT_MOUSE_CLICK, self.open)
-        self.widgets['index'].add_key_command(py_cui.keys.KEY_BACKSPACE, self.back)
         self.widgets['index'].set_selected_color(py_cui.GREEN_ON_BLACK)
-        self.widgets['index'].add_key_command(py_cui.keys.KEY_CTRL_W, self.show_search)
-        self.widgets['index'].add_key_command(py_cui.keys.KEY_CTRL_G, self.focus_genre_filter)
-        self.widgets['index'].add_key_command(py_cui.keys.KEY_CTRL_S, self.show_sort)
-        self.widgets['index'].set_on_selection_change_event(self.show_summary)
+        self.widgets['index'].set_on_selection_change_event(self.update_details)
+        self.widgets['index'].add_key_command(py_cui.keys.KEY_ENTER, self.open)
+        self.widgets['index'].add_mouse_command(py_cui.keys.LEFT_MOUSE_DBL_CLICK, self.open)
+        self.add_key_commands(self.widgets['index'])
 
         self.widgets['plot'] = widget_set.add_text_block('Plot', 0, 4, row_span=5, column_span=2)
-        self.widgets['plot'].add_key_command(py_cui.keys.KEY_BACKSPACE, self.back)
         self.widgets['plot'].set_selectable(False)
+        self.add_key_commands(self.widgets['plot'])
 
         self.widgets['details'] = widget_set.add_text_block('Details', 5, 4, row_span=3, column_span=2)
-        self.widgets['details'].add_key_command(py_cui.keys.KEY_BACKSPACE, self.back)
         self.widgets['details'].set_selectable(False)
+        self.add_key_commands(self.widgets['details'])
 
         return widget_set
+
+    def add_key_commands(self, target):
+        target.add_key_command(py_cui.keys.KEY_BACKSPACE, self.back)
+        target.add_key_command(py_cui.keys.KEY_CTRL_X, exit)
+        target.add_key_command(py_cui.keys.KEY_CTRL_I, self.toggle_help)
+        target.add_key_command(py_cui.keys.KEY_CTRL_W, self.show_search)
+        target.add_key_command(py_cui.keys.KEY_CTRL_S, self.show_sort)
+        target.add_key_command(py_cui.keys.KEY_CTRL_UP, self.genre_back)
+        target.add_key_command(py_cui.keys.KEY_CTRL_DOWN, self.genre_next)
+        target.add_key_command(py_cui.keys.KEY_CTRL_LEFT, self.genre_toggle)
+        target.add_key_command(py_cui.keys.KEY_CTRL_RIGHT, self.load)
 
     def focus(self, target = 'index'):
         self.parent.master.move_focus(self.widgets[target])
@@ -67,6 +72,16 @@ class IndexScreen():
 
     def show_sort(self):
         self.parent.master.show_menu_popup('Sort', ['Alphabetical', 'Last Watched', 'Year'], self.sort, run_command_if_none=False)
+
+    def toggle_help(self):
+        if self.widgets['plot'].get_title() == 'Help':
+            self.update_details()
+        else:
+            message = 'backspace - back\nctrl+h - toggle help\nctrl+s - sort\nctrl+w - search\nctrl+up/down - up/down in genre\nctrl+left - toggle genre\nctrl+right - apply filters\nctrl+x - exit\n'
+            self.widgets['plot'].set_title('Help')
+            self.widgets['plot'].clear()
+            self.widgets['plot'].set_color(py_cui.YELLOW_ON_BLACK)
+            self.widgets['plot'].set_text(message)
 
     def search(self, text):
         self.search_text = text
@@ -86,13 +101,7 @@ class IndexScreen():
         self.reset(True)
 
     def reset(self, reset_genres = False):
-        filtered_genres = [key for key,value in self.widgets['genre_filter']._selected_item_dict.items() if value == True]
-        self.widgets['genre_filter'].clear()
-        if self.path.options:
-            self.widgets['genre_filter'].add_item_list(self.genre_filters())
-        if not reset_genres:
-            for genre in filtered_genres:
-                self.widgets['genre_filter'].toggle_item_checked(genre)
+        self.set_genre_filters(reset_genres)
         self.widgets['index'].set_title(self.path.label)
         self.widgets['index'].clear()
         self.widgets['plot'].clear()
@@ -100,7 +109,7 @@ class IndexScreen():
         if self.path.options:
             self.widgets['index'].add_item_list(self.filter_options())
         self.focus()
-        self.show_summary()
+        self.update_details()
 
     def filter_options(self):
         filtered_genres = [key for key,value in self.widgets['genre_filter']._selected_item_dict.items() if value == True]
@@ -115,8 +124,10 @@ class IndexScreen():
             options = sorted(options, key=lambda k: (k.year is None, k.year))
         return options
 
-    def show_summary(self):
+    def update_details(self):
+        self.widgets['plot'].set_title('Plot')
         self.widgets['plot'].clear()
+        self.widgets['plot'].set_color(py_cui.WHITE_ON_BLACK)
         selected = self.widgets['index'].get()
         if selected and selected.plot:
             width = self.widgets['plot'].get_absolute_stop_pos()[0] - self.widgets['plot'].get_absolute_start_pos()[0] - 6
@@ -132,15 +143,29 @@ class IndexScreen():
         selected = self.widgets['index'].get()
         self.parent.go_to(selected)
 
-    def genre_filters(self):
+    def set_genre_filters(self, reset = False):
+        filtered_genres = [key for key,value in self.widgets['genre_filter']._selected_item_dict.items() if value == True]
+        self.widgets['genre_filter'].clear()
         filters = []
-        options = self.filter_options()
-        if len(options) > 0:
+        options = (self.filter_options() if not reset else (self.path.options if self.path else None))
+        if options and len(options) > 0:
             genre = {genre for option in options for genre in option.genre}
             filters = filters + sorted(genre)
-
-        return filters
+        filters = sorted(list(set(filters + filtered_genres)))
+        self.widgets['genre_filter'].add_item_list(filters)
+        if not reset:
+            for genre in filtered_genres:
+                self.widgets['genre_filter'].toggle_item_checked(genre)
 
     def sort(self, sort):
         self.sort_by = sort
         self.load()
+
+    def genre_back(self):
+        self.widgets['genre_filter']._scroll_up()
+
+    def genre_next(self):
+        self.widgets['genre_filter']._scroll_down(self.widgets['genre_filter'].get_viewport_height())
+
+    def genre_toggle(self):
+        self.widgets['genre_filter'].toggle_item_checked(self.widgets['genre_filter'].get())
