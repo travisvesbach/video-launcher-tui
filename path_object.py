@@ -36,6 +36,13 @@ class PathObject:
     def __str__(self):
         return self.display_name_prefex() + self.display_name()
 
+    def to_dictionary(self):
+        return {
+            'label': self.label,
+            'path': self.path,
+            'type': self.type,
+        }
+
     def display_name_prefex(self):
         output = ''
         if self.type and '_dir' not in self.type and self.type != 'season':

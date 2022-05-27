@@ -8,6 +8,7 @@ from movie_screen import MovieScreen
 from tvshow_screen import TvshowScreen
 from episode_list_screen import EpisodeListScreen
 import time
+import json
 
 # from pprint import pprint
 # pprint(vars(selected))
@@ -28,10 +29,15 @@ class VideoLauncher:
     tvshow_screen_set = False
     episode_list_screen_set = False
 
+    settings = {}
+    settings_file = 'settings.json'
+
     # We add type annotations to our master PyCUI objects for improved intellisense
     def __init__(self, master: py_cui.PyCUI):
 
         self.master = master
+
+        self.settings = json.load(open(self.settings_file, 'r'))
 
         # create widget sets
         self.home_screen = HomeScreen(self)
@@ -69,3 +75,11 @@ class VideoLauncher:
         elif path.type == 'tvshow' and episodes:
             self.master.apply_widget_set(self.episode_list_screen_set)
             self.episode_list_screen.load(path)
+
+    def save_settings(self):
+        with open(self.settings_file, 'w') as file_object:
+            json.dump(self.settings, file_object)
+
+    def set_setting(self, key, value):
+        self.settings[key] = value
+        self.save_settings()
