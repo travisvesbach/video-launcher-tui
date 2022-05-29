@@ -40,11 +40,20 @@ class HomeScreen():
 
         self.widgets['add_dir_button'] = widget_set.add_button('Add Directory', 0, 0, command=self.show_dir_name_box)
 
+        self.widgets['add_dir_button'] = widget_set.add_button('Menu', 1, 0, command=self.show_menu)
 
         self.widgets['exit_btn'] = widget_set.add_button('Exit', 7, 0, command=exit)
         self.widgets['exit_btn'].set_color(py_cui.RED_ON_BLACK)
 
         return widget_set
+
+    def show_menu(self):
+        self.parent.master.show_menu_popup('Directory Options', ['Add', 'Edit', 'Remove'], self.process_menu, run_command_if_none=False)
+
+    def process_menu(self, command):
+        if command == 'Add':
+            self.show_dir_name_box();
+        return
 
     def settings(self):
         self.parent.go_to('settings')
