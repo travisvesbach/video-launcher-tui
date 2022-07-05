@@ -157,7 +157,7 @@ class PathObject:
         if self.type == 'season':
             self.options = sorted(dir_contents, key=lambda k: int(k.episode))
         else:
-            self.options = sorted(dir_contents, key=lambda k: k.title)
+            self.options = sorted(dir_contents, key=lambda k: k.display_name())
 
         if self.type == 'tvshow':
             season_count = 0
