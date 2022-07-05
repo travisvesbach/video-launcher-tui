@@ -108,3 +108,5 @@ class HomeScreen():
         self.directories.remove(text)
         self.widgets['directories'].clear()
         self.widgets['directories'].add_item_list(self.directories)
+
+        self.parent.set_setting('directories', [x.to_dictionary() for x in self.directories])
