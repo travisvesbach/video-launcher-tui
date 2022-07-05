@@ -38,9 +38,7 @@ class HomeScreen():
         self.widgets['directories'].add_key_command(py_cui.keys.KEY_ENTER, self.open_directory)
         self.widgets['directories'].add_mouse_command(py_cui.keys.LEFT_MOUSE_DBL_CLICK, self.open_directory)
 
-        self.widgets['add_dir_button'] = widget_set.add_button('Add Directory', 0, 0, command=self.show_dir_name_box)
-
-        self.widgets['add_dir_button'] = widget_set.add_button('Menu', 1, 0, command=self.show_menu)
+        self.widgets['menu_button'] = widget_set.add_button('Menu', 0, 0, command=self.show_menu)
 
         self.widgets['exit_btn'] = widget_set.add_button('Exit', 7, 0, command=exit)
         self.widgets['exit_btn'].set_color(py_cui.RED_ON_BLACK)
@@ -48,11 +46,13 @@ class HomeScreen():
         return widget_set
 
     def show_menu(self):
-        self.parent.master.show_menu_popup('Directory Options', ['Add', 'Edit', 'Remove'], self.process_menu, run_command_if_none=False)
+        self.parent.master.show_menu_popup('Directory Options', ['Add', 'Remove'], self.process_menu, run_command_if_none=False)
 
     def process_menu(self, command):
         if command == 'Add':
             self.show_dir_name_box();
+        elif command == 'Remove':
+            self.show_remove_dir_list_menu();
         return
 
     def settings(self):
@@ -77,7 +77,6 @@ class HomeScreen():
             self.dir_name = text
             self.show_dir_path_box()
 
-
     def show_dir_path_box(self, text = False):
         self.parent.master.show_text_box_popup('Path?' + (text if text else ''), self.check_dir_path)
 
@@ -101,3 +100,11 @@ class HomeScreen():
         self.widgets['directories'].add_item_list(self.directories)
 
         self.parent.set_setting('directories', [x.to_dictionary() for x in self.directories])
+
+    def show_remove_dir_list_menu(self):
+        self.parent.master.show_menu_popup('Select Directory to Remove', self.directories, self.remove_dir, run_command_if_none=False)
+
+    def remove_dir(self, text):
+        self.directories.remove(text)
+        self.widgets['directories'].clear()
+        self.widgets['directories'].add_item_list(self.directories)
