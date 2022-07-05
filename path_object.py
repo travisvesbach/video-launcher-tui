@@ -37,11 +37,16 @@ class PathObject:
         return self.display_name_prefex() + self.display_name()
 
     def to_dictionary(self):
-        return {
+        output = {
             'label': self.label,
             'path': self.path,
             'type': self.type,
         }
+
+        if self.parent:
+            output['parent_path'] = self.parent.path
+
+        return output
 
     def display_name_prefex(self):
         output = ''

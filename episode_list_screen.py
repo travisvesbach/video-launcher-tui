@@ -74,6 +74,8 @@ class EpisodeListScreen():
         self.widgets['episodes'].get().play()
         self.update_details()
 
+        self.parent.set_recently_watched(self.path)
+
     def click_watched(self):
         self.widgets['episodes'].get().toggle_watched(None, True)
         self.update_details()

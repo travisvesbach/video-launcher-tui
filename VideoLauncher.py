@@ -83,3 +83,16 @@ class VideoLauncher:
     def set_setting(self, key, value):
         self.settings[key] = value
         self.save_settings()
+
+    def set_recently_watched(self, path_object):
+        simple_path_obj = path_object.to_dictionary()
+
+        recently_watched = self.settings['recently_watched'] if 'recently_watched' in self.settings else []
+        if recently_watched and simple_path_obj in recently_watched:
+            recently_watched = [x for x in recently_watched if x['path'] and x['path'] != simple_path_obj['path']]
+
+        recently_watched.insert(0, simple_path_obj)
+        if len(recently_watched) > 5:
+            recently_watched.pop()
+        self.set_setting('recently_watched', recently_watched)
+        self.home_screen.set_recently_watched()
