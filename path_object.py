@@ -178,8 +178,20 @@ class PathObject:
 
 
     def play(self):
-        self.toggle_watched('true', True)
-        os.startfile(self.play_path())
+        if self.type == 'episode' or self.type == 'movie':
+            self.toggle_watched('true', True)
+            os.startfile(self.play_path())
+        elif self.type == 'tvshow':
+            # for play next button
+            found = False;
+            for season in self.options:
+                if found:
+                    break
+                for episode in season.options:
+                    if episode.watched == 'false' or episode.watched == False:
+                        found = True
+                        episode.play()
+                        break
 
     def toggle_watched(self, status = None, update_parent = False):
         if status != None:
