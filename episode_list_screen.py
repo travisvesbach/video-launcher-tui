@@ -34,6 +34,7 @@ class EpisodeListScreen():
         self.widgets['episodes'].set_selected_color(py_cui.GREEN_ON_BLACK)
         self.widgets['episodes'].set_on_selection_change_event(self.update_details)
         self.widgets['episodes'].add_key_command(py_cui.keys.KEY_ENTER, self.click_play)
+        self.widgets['episodes'].add_mouse_command(py_cui.keys.LEFT_MOUSE_DBL_CLICK, self.click_play)
         self.add_key_commands(self.widgets['episodes'])
 
         self.widgets['plot'] = widget_set.add_text_block('Plot', 0, 4, row_span=6, column_span=2)
