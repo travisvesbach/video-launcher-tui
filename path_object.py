@@ -104,6 +104,11 @@ class PathObject:
             path = Path(os.path.splitext(self.path)[0] + '.nfo')
         if path and path.is_file():
             self.read_nfo(path)
+        elif path != False:
+            root = ET.Element('episodedetails')
+            ET.SubElement(root, 'plot').text = '.nfo file not found. This simple one was created to track iswatched and lastwatched variables.  If you create a .nfo file later, it might overwrite these values.'
+            ET.SubElement(root, 'iswatched').text = 'false'
+            ET.ElementTree(root).write(path, encoding="utf-8")
 
     def read_nfo(self, path):
         self.nfo_path = path
